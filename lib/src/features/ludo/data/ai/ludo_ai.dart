@@ -78,15 +78,16 @@ class LudoAI extends AIRuleSet<LudoState> {
   }
 
   @override
-  LudoState makeMove(LudoState state, Map<String, dynamic> move) {
+  LudoState makeMove(LudoState state, dynamic move) {
+    final moveMap = move as Map<String, dynamic>;
     final aiIndex = state.players.indexOf(aiPlayer);
     final newPieces = List<List<Piece>>.generate(
       state.playerPieces.length,
       (i) => List<Piece>.from(state.playerPieces[i].map((p) => p.copyWith())),
     );
     
-    final pieceIndex = move['pieceIndex'] as int;
-    final newPosition = move['newPosition'] as int;
+    final pieceIndex = moveMap['pieceIndex'] as int;
+    final newPosition = moveMap['newPosition'] as int;
     
     final piece = newPieces[aiIndex][pieceIndex];
     piece.position = newPosition;
@@ -131,7 +132,7 @@ class LudoAI extends AIRuleSet<LudoState> {
   }
 
   @override
-  LudoState undoMove(LudoState state, Map<String, dynamic> move) {
+  LudoState undoMove(LudoState state, dynamic move) {
     // Implementation for undoing moves
     return state; // Simplified for now
   }

@@ -61,7 +61,7 @@ abstract class GameController<T extends GameState> extends ChangeNotifier {
     onGameEnd();
   }
 
-  Future<void> resetGame() async {
+  void resetGame() {
     _stopGameTimer();
     onGameReset();
   }

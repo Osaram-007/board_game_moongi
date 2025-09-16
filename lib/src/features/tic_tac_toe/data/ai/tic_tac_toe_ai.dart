@@ -86,13 +86,14 @@ class TicTacToeAI extends AIRuleSet<TicTacToeState> {
   }
 
   @override
-  TicTacToeState makeMove(TicTacToeState state, Map<String, int> move) {
+  TicTacToeState makeMove(TicTacToeState state, dynamic move) {
+    final moveMap = move as Map<String, int>;
     final newBoard = List<List<String?>>.generate(
       3,
       (i) => List<String?>.from(state.board[i]),
     );
     
-    newBoard[move['row']!][move['col']!] = aiSymbol;
+    newBoard[moveMap['row']!][moveMap['col']!] = aiSymbol;
     
     return TicTacToeState.withBoard(
       players: state.players,
@@ -106,13 +107,14 @@ class TicTacToeAI extends AIRuleSet<TicTacToeState> {
   }
 
   @override
-  TicTacToeState undoMove(TicTacToeState state, Map<String, int> move) {
+  TicTacToeState undoMove(TicTacToeState state, dynamic move) {
+    final moveMap = move as Map<String, int>;
     final newBoard = List<List<String?>>.generate(
       3,
       (i) => List<String?>.from(state.board[i]),
     );
     
-    newBoard[move['row']!][move['col']!] = null;
+    newBoard[moveMap['row']!][moveMap['col']!] = null;
     
     return TicTacToeState.withBoard(
       players: state.players,

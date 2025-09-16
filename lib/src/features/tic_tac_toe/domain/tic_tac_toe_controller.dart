@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:board_game_moongi/src/core/game/game_controller.dart';
 import 'package:board_game_moongi/src/core/game/player.dart';
+import 'package:board_game_moongi/src/core/game/game_state.dart';
 import 'package:board_game_moongi/src/features/tic_tac_toe/data/models/tic_tac_toe_state.dart';
 import 'package:board_game_moongi/src/features/tic_tac_toe/data/ai/tic_tac_toe_ai.dart';
 
@@ -34,9 +35,10 @@ class TicTacToeController extends GameController<TicTacToeState> {
   }
 
   @override
-  bool isValidMove(Map<String, int> move) {
-    final row = move['row']!;
-    final col = move['col']!;
+  bool isValidMove(dynamic move) {
+    final moveMap = move as Map<String, int>;
+    final row = moveMap['row']!;
+    final col = moveMap['col']!;
     
     return state.status == GameStatus.playing &&
            state.isCellEmpty(row, col) &&
@@ -44,13 +46,14 @@ class TicTacToeController extends GameController<TicTacToeState> {
   }
 
   @override
-  void processMove(Map<String, int> move) {
+  void processMove(dynamic move) {
+    final moveMap = move as Map<String, int>;
     final newBoard = List<List<String?>>.generate(
       3,
       (i) => List<String?>.from(state.board[i]),
     );
     
-    newBoard[move['row']!][move['col']!] = getSymbolForPlayer(state.currentPlayer!);
+    newBoard[moveMap['row']!][moveMap['col']!] = getSymbolForPlayer(state.currentPlayer!);
     
     final nextPlayer = state.currentPlayer == humanPlayer ? aiPlayer : humanPlayer;
     

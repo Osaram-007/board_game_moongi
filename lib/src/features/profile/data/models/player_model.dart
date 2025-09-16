@@ -1,10 +1,6 @@
-import 'package:isar/isar.dart';
+import 'dart:convert';
 
-part 'player_model.g.dart';
-
-@collection
 class PlayerModel {
-  Id get isarId => fastHash(id);
   
   final String id;
   final String name;
@@ -18,7 +14,7 @@ class PlayerModel {
   final DateTime lastPlayedAt;
   final bool isCurrent;
 
-  const PlayerModel({
+  PlayerModel({
     required this.id,
     required this.name,
     this.avatar,
@@ -62,16 +58,36 @@ class PlayerModel {
 
   double get winRate => totalGamesPlayed > 0 ? gamesWon / totalGamesPlayed : 0.0;
 
-  static int fastHash(String string) {
-    var hash = 0xcbf29ce484222325;
-    var i = 0;
-    while (i < string.length) {
-      final codeUnit = string.codeUnitAt(i++);
-      hash ^= codeUnit >> 8;
-      hash *= 0x100000001b3;
-      hash ^= codeUnit & 0xFF;
-      hash *= 0x100000001b3;
-    }
-    return hash;
+  // JSON serialization
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'avatar': avatar,
+      'totalGamesPlayed': totalGamesPlayed,
+      'gamesWon': gamesWon,
+      'ticTacToeWins': ticTacToeWins,
+      'snakesLaddersWins': snakesLaddersWins,
+      'ludoWins': ludoWins,
+      'createdAt': createdAt.toIso8601String(),
+      'lastPlayedAt': lastPlayedAt.toIso8601String(),
+      'isCurrent': isCurrent,
+    };
+  }
+
+  factory PlayerModel.fromJson(Map<String, dynamic> json) {
+    return PlayerModel(
+      id: json['id'],
+      name: json['name'],
+      avatar: json['avatar'],
+      totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
+      gamesWon: json['gamesWon'] ?? 0,
+      ticTacToeWins: json['ticTacToeWins'] ?? 0,
+      snakesLaddersWins: json['snakesLaddersWins'] ?? 0,
+      ludoWins: json['ludoWins'] ?? 0,
+      createdAt: DateTime.parse(json['createdAt']),
+      lastPlayedAt: DateTime.parse(json['lastPlayedAt']),
+      isCurrent: json['isCurrent'] ?? false,
+    );
   }
 }

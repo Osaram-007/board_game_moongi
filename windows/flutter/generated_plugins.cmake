@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
-  isar_flutter_libs
   rive_common
 )
 

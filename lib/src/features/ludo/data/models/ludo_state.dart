@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:equatable/equatable.dart';
 import 'package:board_game_moongi/src/core/game/game_state.dart';
 import 'package:board_game_moongi/src/core/game/player.dart';
 

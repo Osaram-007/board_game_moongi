@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:board_game_moongi/src/core/game/game_controller.dart';
 import 'package:board_game_moongi/src/core/game/player.dart';
+import 'package:board_game_moongi/src/core/game/game_state.dart';
 import 'package:board_game_moongi/src/features/snakes_ladders/data/models/snakes_ladders_state.dart';
 
 class SnakesLaddersController extends GameController<SnakesLaddersState> {
@@ -21,7 +22,8 @@ class SnakesLaddersController extends GameController<SnakesLaddersState> {
         ));
 
   @override
-  bool isValidMove(int diceValue) {
+  bool isValidMove(dynamic move) {
+    final diceValue = move as int;
     return state.status == GameStatus.playing &&
            state.currentPlayer != null &&
            !state.isRolling &&
@@ -29,7 +31,8 @@ class SnakesLaddersController extends GameController<SnakesLaddersState> {
   }
 
   @override
-  void processMove(int diceValue) {
+  void processMove(dynamic move) {
+    final diceValue = move as int;
     final currentPlayerIndex = state.players.indexOf(state.currentPlayer!);
     final currentPosition = state.playerPositions[currentPlayerIndex];
     final newPosition = state.getNextPosition(currentPosition, diceValue);

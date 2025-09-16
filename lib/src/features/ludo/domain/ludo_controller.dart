@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../data/models/ludo_state.dart';
 import 'package:board_game_moongi/src/core/game/game_controller.dart';
 import 'package:board_game_moongi/src/core/game/player.dart';
+import 'package:board_game_moongi/src/core/game/game_state.dart';
 import 'package:board_game_moongi/src/features/ludo/data/models/ludo_state.dart';
 import 'package:board_game_moongi/src/features/ludo/data/ai/ludo_ai.dart';
 
@@ -56,9 +59,10 @@ class LudoController extends GameController<LudoState> {
   }
 
   @override
-  bool isValidMove(Map<String, dynamic> move) {
-    final pieceIndex = move['pieceIndex'] as int;
-    final newPosition = move['newPosition'] as int;
+  bool isValidMove(dynamic move) {
+    final moveMap = move as Map<String, dynamic>;
+    final pieceIndex = moveMap['pieceIndex'] as int;
+    final newPosition = moveMap['newPosition'] as int;
     
     if (state.status != GameStatus.playing) return false;
     if (state.isRolling) return false;
@@ -71,9 +75,10 @@ class LudoController extends GameController<LudoState> {
   }
 
   @override
-  void processMove(Map<String, dynamic> move) {
-    final pieceIndex = move['pieceIndex'] as int;
-    final newPosition = move['newPosition'] as int;
+  void processMove(dynamic move) {
+    final moveMap = move as Map<String, dynamic>;
+    final pieceIndex = moveMap['pieceIndex'] as int;
+    final newPosition = moveMap['newPosition'] as int;
     
     final playerIndex = state.players.indexOf(state.currentPlayer!);
     final newPieces = List<List<Piece>>.generate(

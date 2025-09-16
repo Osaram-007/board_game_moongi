@@ -1,70 +1,71 @@
-import 'package:isar/isar.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:board_game_moongi/src/features/profile/data/models/player_model.dart';
 
 class DatabaseService {
-  final Isar _isar;
+  static const String _playersKey = 'players';
+  static const String _currentPlayerKey = 'current_player';
 
-  DatabaseService(this._isar);
+  DatabaseService();
 
   // Player CRUD operations
   Future<List<PlayerModel>> getAllPlayers() async {
-    return await _isar.playerModels.where().findAll();
+    final prefs = await SharedPreferences.getInstance();
+    final playersJson = prefs.getStringList(_playersKey) ?? [];
+    return playersJson.map((json) => PlayerModel.fromJson(jsonDecode(json))).toList();
   }
 
   Future<PlayerModel?> getPlayer(String id) async {
-    return await _isar.playerModels.get(fastHash(id));
+    final players = await getAllPlayers();
+    try {
+      return players.firstWhere((player) => player.id == id);
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<void> savePlayer(PlayerModel player) async {
-    await _isar.writeTxn(() async {
-      await _isar.playerModels.put(player);
-    });
+    final prefs = await SharedPreferences.getInstance();
+    final players = await getAllPlayers();
+    
+    // Remove existing player with same ID
+    players.removeWhere((p) => p.id == player.id);
+    
+    // Add updated player
+    players.add(player);
+    
+    // Save to SharedPreferences
+    final playersJson = players.map((p) => jsonEncode(p.toJson())).toList();
+    await prefs.setStringList(_playersKey, playersJson);
   }
 
   Future<void> deletePlayer(String id) async {
-    await _isar.writeTxn(() async {
-      await _isar.playerModels.delete(fastHash(id));
-    });
+    final prefs = await SharedPreferences.getInstance();
+    final players = await getAllPlayers();
+    
+    players.removeWhere((player) => player.id == id);
+    
+    final playersJson = players.map((p) => jsonEncode(p.toJson())).toList();
+    await prefs.setStringList(_playersKey, playersJson);
   }
 
   Future<PlayerModel?> getCurrentPlayer() async {
-    return await _isar.playerModels
-        .filter()
-        .isCurrentEqualTo(true)
-        .findFirst();
+    final prefs = await SharedPreferences.getInstance();
+    final currentPlayerId = prefs.getString(_currentPlayerKey);
+    
+    if (currentPlayerId != null) {
+      return await getPlayer(currentPlayerId);
+    }
+    return null;
   }
 
   Future<void> setCurrentPlayer(String? playerId) async {
-    await _isar.writeTxn(() async {
-      // Clear current player flag from all players
-      final allPlayers = await _isar.playerModels.where().findAll();
-      for (final player in allPlayers) {
-        player.isCurrent = false;
-        await _isar.playerModels.put(player);
-      }
-
-      // Set new current player
-      if (playerId != null) {
-        final player = await _isar.playerModels.get(fastHash(playerId));
-        if (player != null) {
-          player.isCurrent = true;
-          await _isar.playerModels.put(player);
-        }
-      }
-    });
-  }
-
-  // Utility method for generating hash from string ID
-  static int fastHash(String string) {
-    var hash = 0xcbf29ce484222325;
-    var i = 0;
-    while (i < string.length) {
-      final codeUnit = string.codeUnitAt(i++);
-      hash ^= codeUnit >> 8;
-      hash *= 0x100000001b3;
-      hash ^= codeUnit & 0xFF;
-      hash *= 0x100000001b3;
+    final prefs = await SharedPreferences.getInstance();
+    
+    if (playerId != null) {
+      await prefs.setString(_currentPlayerKey, playerId);
+    } else {
+      await prefs.remove(_currentPlayerKey);
     }
-    return hash;
   }
 }

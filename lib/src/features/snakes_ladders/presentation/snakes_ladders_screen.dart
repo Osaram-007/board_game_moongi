@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:board_game_moongi/src/core/game/player.dart';
+import 'package:board_game_moongi/src/core/game/game_state.dart';
 import 'package:board_game_moongi/src/core/theme/app_theme.dart';
 import 'package:board_game_moongi/src/features/snakes_ladders/domain/snakes_ladders_controller.dart';
 import 'package:board_game_moongi/src/features/snakes_ladders/data/models/snakes_ladders_state.dart';
