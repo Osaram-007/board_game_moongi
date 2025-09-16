@@ -263,21 +263,37 @@ class _SnakesLaddersScreenState extends State<SnakesLaddersScreen> {
       padding: const EdgeInsets.all(24.0),
       child: Column(
         children: [
-          ElevatedButton.icon(
-            onPressed: controller.state.status == GameStatus.playing && !controller.state.isRolling
-                ? controller.rollDice
-                : null,
-            icon: const Icon(Icons.casino),
-            label: Text(
-              controller.state.isRolling ? 'Rolling...' : 'Roll Dice',
-              style: const TextStyle(fontSize: 18),
+          if (controller.state.status == GameStatus.waiting) ...[
+            ElevatedButton.icon(
+              onPressed: () => controller.startGame(),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text(
+                'Start Game',
+                style: TextStyle(fontSize: 18),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                backgroundColor: AppTheme.successColor,
+                foregroundColor: Colors.white,
+              ),
             ),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
+          ] else ...[
+            ElevatedButton.icon(
+              onPressed: controller.state.status == GameStatus.playing && !controller.state.isRolling
+                  ? controller.rollDice
+                  : null,
+              icon: const Icon(Icons.casino),
+              label: Text(
+                controller.state.isRolling ? 'Rolling...' : 'Roll Dice',
+                style: const TextStyle(fontSize: 18),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -311,14 +327,18 @@ class _SnakesLaddersScreenState extends State<SnakesLaddersScreen> {
   }
 
   int _getCellIndex(int position) {
-    position = 101 - position;
-    final row = (position - 1) ~/ 10;
-    final col = (position - 1) % 10;
+    // Convert game position (1-100) to grid index (0-99)
+    final adjustedPosition = position - 1;
+    final row = adjustedPosition ~/ 10;
+    final col = adjustedPosition % 10;
     
+    // Snake and ladders board has alternating row directions
+    // Bottom row (0): left to right
+    // Next row (1): right to left, etc.
     if (row % 2 == 0) {
-      return row * 10 + col;
+      return (9 - row) * 10 + col;
     } else {
-      return row * 10 + (9 - col);
+      return (9 - row) * 10 + (9 - col);
     }
   }
 

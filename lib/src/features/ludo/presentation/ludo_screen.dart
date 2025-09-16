@@ -59,8 +59,11 @@ class _LudoScreenState extends State<LudoScreen> {
     return ChangeNotifierProvider.value(
       value: _controller,
       child: Scaffold(
+        backgroundColor: const Color(0xFF4A4A8A), // Purple background like in image
         appBar: AppBar(
           title: const Text('Ludo'),
+          backgroundColor: const Color(0xFF4A4A8A),
+          foregroundColor: Colors.white,
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
@@ -72,19 +75,18 @@ class _LudoScreenState extends State<LudoScreen> {
           builder: (context, controller, child) {
             return Column(
               children: [
-                _buildGameStatus(controller.state),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildGameBoard(controller)),
-                        const SizedBox(width: 16),
-                        _buildPlayerInfo(controller.state),
-                      ],
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: _buildLudoBoard(controller),
+                      ),
                     ),
                   ),
                 ),
+                _buildPlayerTokens(controller.state),
                 _buildGameControls(controller),
               ],
             );
@@ -153,195 +155,284 @@ class _LudoScreenState extends State<LudoScreen> {
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _buildGameBoard(LudoController controller) {
+  Widget _buildLudoBoard(LudoController controller) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange, width: 4),
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // Ludo board layout
-          Center(
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: CustomPaint(
-                painter: LudoBoardPainter(),
-              ),
+          // Top row
+          Expanded(
+            child: Row(
+              children: [
+                // Red quadrant
+                Expanded(child: _buildQuadrant(Colors.red, 0)),
+                // Top path
+                Expanded(child: _buildTopPath()),
+                // Green quadrant  
+                Expanded(child: _buildQuadrant(Colors.green, 1)),
+              ],
             ),
           ),
-          
-          // Player pieces
-          ..._buildPlayerPieces(controller.state),
+          // Middle row (left path + center + right path)
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _buildLeftPath()),
+                Expanded(child: _buildCenter()),
+                Expanded(child: _buildRightPath()),
+              ],
+            ),
+          ),
+          // Bottom row
+          Expanded(
+            child: Row(
+              children: [
+                // Blue quadrant
+                Expanded(child: _buildQuadrant(Colors.blue, 2)),
+                // Bottom path
+                Expanded(child: _buildBottomPath()),
+                // Yellow quadrant
+                Expanded(child: _buildQuadrant(Colors.yellow, 3)),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  List<Widget> _buildPlayerPieces(LudoState state) {
-    final pieces = <Widget>[];
-    
-    for (int playerIndex = 0; playerIndex < state.players.length; playerIndex++) {
-      final playerPieces = state.playerPieces[playerIndex];
-      final playerColor = _getPlayerColor(playerIndex);
-      
-      for (int pieceIndex = 0; pieceIndex < playerPieces.length; pieceIndex++) {
-        final piece = playerPieces[pieceIndex];
-        final position = _getPiecePosition(piece, playerIndex);
-        
-        pieces.add(
-          Positioned(
-            left: position.dx,
-            top: position.dy,
-            child: GestureDetector(
-              onTap: () => _controller.selectPiece(pieceIndex),
-              child: AnimatedContainer(
-                duration: 600.ms,
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: piece.color,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: state.selectedPieceIndex == pieceIndex 
-                        ? Colors.yellow 
-                        : Colors.white,
-                    width: state.selectedPieceIndex == pieceIndex ? 3 : 2,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    '${pieceIndex + 1}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ).animate().scale(
-                duration: 300.ms,
-                curve: Curves.easeOut,
-              ),
-            ),
-          ),
-        );
-      }
-    }
-    
-    return pieces;
-  }
-
-  Widget _buildPlayerInfo(LudoState state) {
+  Widget _buildQuadrant(Color color, int quadrantIndex) {
     return Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: color,
+        border: Border.all(color: Colors.white, width: 1),
       ),
-      child: Column(
-        children: [
-          Text(
-            'Players',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          ...List.generate(state.players.length, (index) {
-            final player = state.players[index];
-            final piecesInHome = state.getPiecesInHome(player);
-            final color = _getPlayerColor(index);
-            
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: GridView.count(
+          crossAxisCount: 2,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          children: List.generate(4, (index) {
             return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: state.currentPlayer?.id == player.id 
-                      ? color 
-                      : Colors.transparent,
-                  width: 2,
-                ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    player.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+              child: Center(
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
-                  Text(
-                    'Pieces Home: $piecesInHome/4',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ],
+                ),
               ),
             );
           }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopPath() {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: List.generate(3, (row) {
+          return Expanded(
+            child: Row(
+              children: List.generate(6, (col) {
+                final isMiddleColumn = col == 1;
+                final isHomeStretch = row == 1 && isMiddleColumn;
+                return Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isHomeStretch ? Colors.green : Colors.white,
+                      border: Border.all(color: Colors.grey, width: 0.5),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildBottomPath() {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: List.generate(3, (row) {
+          return Expanded(
+            child: Row(
+              children: List.generate(6, (col) {
+                final isMiddleColumn = col == 1;
+                final isHomeStretch = row == 1 && isMiddleColumn;
+                return Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isHomeStretch ? Colors.yellow : Colors.white,
+                      border: Border.all(color: Colors.grey, width: 0.5),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildLeftPath() {
+    return Container(
+      color: Colors.white,
+      child: Row(
+        children: List.generate(3, (col) {
+          return Expanded(
+            child: Column(
+              children: List.generate(6, (row) {
+                final isMiddleRow = row == 1;
+                final isHomeStretch = col == 1 && isMiddleRow;
+                return Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isHomeStretch ? Colors.red : Colors.white,
+                      border: Border.all(color: Colors.grey, width: 0.5),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildRightPath() {
+    return Container(
+      color: Colors.white,
+      child: Row(
+        children: List.generate(3, (col) {
+          return Expanded(
+            child: Column(
+              children: List.generate(6, (row) {
+                final isMiddleRow = row == 1;
+                final isHomeStretch = col == 1 && isMiddleRow;
+                return Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isHomeStretch ? Colors.blue : Colors.white,
+                      border: Border.all(color: Colors.grey, width: 0.5),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildCenter() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey, width: 1),
+      ),
+      child: Stack(
+        children: [
+          // Center triangle paths
+          CustomPaint(
+            painter: CenterTrianglePainter(),
+            size: const Size.square(double.infinity),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerTokens(LudoState state) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(4, (index) {
+          final colors = [Colors.green, Colors.orange, Colors.red, Colors.blue];
+          final isActive = index < state.players.length && 
+                          state.currentPlayer?.id == state.players[index].id;
+          
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: colors[index],
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isActive ? Colors.white : Colors.transparent,
+                width: 3,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.person,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
 
   Widget _buildGameControls(LudoController controller) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: controller.state.status == GameStatus.playing && 
-                         !controller.state.isRolling &&
-                         controller.state.validMoves.isNotEmpty
-                    ? controller.moveSelectedPiece
-                    : null,
-                icon: const Icon(Icons.move_up),
-                label: const Text('Move Piece'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
+          if (controller.state.status == GameStatus.waiting) ..[
+            ElevatedButton.icon(
+              onPressed: () => controller.startGame(),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start Game'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
               ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: controller.state.status == GameStatus.playing && 
-                         !controller.state.isRolling
-                    ? controller.rollDice
-                    : null,
-                icon: const Icon(Icons.casino),
-                label: Text(
-                  controller.state.isRolling ? 'Rolling...' : 'Roll Dice',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
+            ),
+          ] else ..[
+            ElevatedButton.icon(
+              onPressed: controller.state.status == GameStatus.playing && 
+                       !controller.state.isRolling
+                  ? controller.rollDice
+                  : null,
+              icon: const Icon(Icons.casino),
+              label: Text(
+                controller.state.isRolling ? 'Rolling...' : 'Roll Dice',
+                style: const TextStyle(fontSize: 16),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -349,11 +440,19 @@ class _LudoScreenState extends State<LudoScreen> {
                 onPressed: () => controller.resetGame(),
                 icon: const Icon(Icons.refresh),
                 label: const Text('New Game'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF4A4A8A),
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: () => context.go('/'),
                 icon: const Icon(Icons.home),
                 label: const Text('Main Menu'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF4A4A8A),
+                ),
               ),
             ],
           ),
@@ -398,71 +497,52 @@ class _LudoScreenState extends State<LudoScreen> {
   }
 }
 
-class LudoBoardPainter extends CustomPainter {
+class CenterTrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.black;
-
-    // Draw board outline
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
-
-    // Draw center square
-    final centerSize = size.width * 0.3;
-    final centerOffset = (size.width - centerSize) / 2;
-    canvas.drawRect(
-      Rect.fromLTWH(centerOffset, centerOffset, centerSize, centerSize),
-      paint,
-    );
-
-    // Draw home stretches
-    _drawHomeStretch(canvas, size, Colors.red, 0);
-    _drawHomeStretch(canvas, size, Colors.blue, 1);
-    _drawHomeStretch(canvas, size, Colors.green, 2);
-    _drawHomeStretch(canvas, size, Colors.yellow, 3);
-  }
-
-  void _drawHomeStretch(Canvas canvas, Size size, Color color, int playerIndex) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.3)
       ..style = PaintingStyle.fill;
 
-    final cellSize = size.width / 15;
-    
-    // Draw player home areas (simplified)
-    switch (playerIndex) {
-      case 0: // Red - top left
-        canvas.drawRect(
-          Rect.fromLTWH(0, 0, cellSize * 6, cellSize * 6),
-          paint,
-        );
-        break;
-      case 1: // Blue - top right
-        canvas.drawRect(
-          Rect.fromLTWH(size.width - cellSize * 6, 0, cellSize * 6, cellSize * 6),
-          paint,
-        );
-        break;
-      case 2: // Green - bottom right
-        canvas.drawRect(
-          Rect.fromLTWH(
-            size.width - cellSize * 6, 
-            size.height - cellSize * 6, 
-            cellSize * 6, 
-            cellSize * 6
-          ),
-          paint,
-        );
-        break;
-      case 3: // Yellow - bottom left
-        canvas.drawRect(
-          Rect.fromLTWH(0, size.height - cellSize * 6, cellSize * 6, cellSize * 6),
-          paint,
-        );
-        break;
-    }
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final triangleSize = size.width * 0.3;
+
+    // Draw colored triangles pointing to each quadrant
+    // Red triangle (pointing left)
+    paint.color = Colors.red;
+    final redPath = Path()
+      ..moveTo(centerX - triangleSize / 2, centerY)
+      ..lineTo(centerX, centerY - triangleSize / 4)
+      ..lineTo(centerX, centerY + triangleSize / 4)
+      ..close();
+    canvas.drawPath(redPath, paint);
+
+    // Green triangle (pointing up)
+    paint.color = Colors.green;
+    final greenPath = Path()
+      ..moveTo(centerX, centerY - triangleSize / 2)
+      ..lineTo(centerX - triangleSize / 4, centerY)
+      ..lineTo(centerX + triangleSize / 4, centerY)
+      ..close();
+    canvas.drawPath(greenPath, paint);
+
+    // Blue triangle (pointing right)
+    paint.color = Colors.blue;
+    final bluePath = Path()
+      ..moveTo(centerX + triangleSize / 2, centerY)
+      ..lineTo(centerX, centerY - triangleSize / 4)
+      ..lineTo(centerX, centerY + triangleSize / 4)
+      ..close();
+    canvas.drawPath(bluePath, paint);
+
+    // Yellow triangle (pointing down)
+    paint.color = Colors.yellow;
+    final yellowPath = Path()
+      ..moveTo(centerX, centerY + triangleSize / 2)
+      ..lineTo(centerX - triangleSize / 4, centerY)
+      ..lineTo(centerX + triangleSize / 4, centerY)
+      ..close();
+    canvas.drawPath(yellowPath, paint);
   }
 
   @override
