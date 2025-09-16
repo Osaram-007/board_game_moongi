@@ -1,4 +1,4 @@
-package com.example.board_game_moongi
+package com.moongi.board_game_moongi
 
 import io.flutter.embedding.android.FlutterActivity
 
