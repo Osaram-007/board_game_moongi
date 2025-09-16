@@ -41,8 +41,7 @@ class TicTacToeController extends GameController<TicTacToeState> {
     final col = moveMap['col']!;
     
     return state.status == GameStatus.playing &&
-           state.isCellEmpty(row, col) &&
-           state.currentPlayer == humanPlayer;
+           state.isCellEmpty(row, col);
   }
 
   @override
@@ -98,7 +97,9 @@ class TicTacToeController extends GameController<TicTacToeState> {
 
   @override
   void nextTurn() {
+    print('DEBUG: nextTurn called - gameMode: $gameMode, currentPlayer: ${state.currentPlayer?.name}');
     if (gameMode == 'vs-ai' && state.currentPlayer == aiPlayer) {
+      print('DEBUG: Scheduling AI move');
       _scheduleAIMove();
     }
   }
@@ -111,11 +112,14 @@ class TicTacToeController extends GameController<TicTacToeState> {
   }
 
   void _makeAIMove() {
+    print('DEBUG: _makeAIMove called - status: ${state.status}, currentPlayer: ${state.currentPlayer?.name}');
     if (state.status != GameStatus.playing || state.currentPlayer != aiPlayer) {
+      print('DEBUG: AI move cancelled - invalid state');
       return;
     }
 
     final bestMove = _ai.getBestMove(state);
+    print('DEBUG: AI best move: $bestMove');
     if (bestMove != null) {
       makeMove(bestMove);
     }
