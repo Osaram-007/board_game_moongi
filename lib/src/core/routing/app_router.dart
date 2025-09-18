@@ -4,7 +4,9 @@ import 'package:board_game_moongi/src/features/main_menu/presentation/main_menu_
 import 'package:board_game_moongi/src/features/profile/presentation/profile_screen.dart';
 import 'package:board_game_moongi/src/features/tic_tac_toe/presentation/tic_tac_toe_screen.dart';
 import 'package:board_game_moongi/src/features/snakes_ladders/presentation/snakes_ladders_screen.dart';
-import 'package:board_game_moongi/src/features/ludo/presentation/ludo_screen.dart';
+import 'package:board_game_moongi/src/features/ludo/presentation/new_ludo_screen.dart';
+import 'package:board_game_moongi/src/core/game/game_state.dart';
+import 'package:board_game_moongi/src/features/ludo/data/models/new_ludo_state.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -39,8 +41,24 @@ class AppRouter {
         path: '/ludo',
         name: 'ludo',
         builder: (context, state) {
-          final mode = state.extra as String? ?? 'vs-ai';
-          return LudoScreen(gameMode: mode);
+          String modeStr = 'vs-ai';
+          String difficultyStr = 'medium';
+          
+          if (state.extra is Map<String, dynamic>) {
+            final params = state.extra as Map<String, dynamic>;
+            modeStr = params['gameMode'] as String? ?? 'vs-ai';
+            difficultyStr = params['difficulty'] as String? ?? 'medium';
+          } else if (state.extra is String) {
+            modeStr = state.extra as String;
+          }
+          
+          GameMode gameMode = modeStr == 'multiplayer' ? GameMode.multiPlayer : GameMode.singlePlayer;
+          DifficultyLevel difficulty = DifficultyLevel.values.firstWhere(
+            (d) => d.name == difficultyStr,
+            orElse: () => DifficultyLevel.medium,
+          );
+          
+          return NewLudoScreen(gameMode: gameMode, difficulty: difficulty);
         },
       ),
     ],
