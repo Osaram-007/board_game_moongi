@@ -6,28 +6,58 @@ import 'package:board_game_moongi/src/core/game/game_state.dart';
 import 'package:board_game_moongi/src/features/tic_tac_toe/data/models/tic_tac_toe_state.dart';
 import 'package:board_game_moongi/src/features/tic_tac_toe/data/ai/tic_tac_toe_ai.dart';
 
+export 'package:board_game_moongi/src/features/tic_tac_toe/data/ai/tic_tac_toe_ai.dart' show AIDifficulty;
+
 class TicTacToeController extends GameController<TicTacToeState> {
   final String gameMode;
-  final Player humanPlayer;
-  final Player aiPlayer;
-  late final TicTacToeAI _ai;
+  final Player player1;
+  final Player player2;
+  late TicTacToeAI? _ai;
   Timer? _aiMoveTimer;
+  AIDifficulty _currentDifficulty;
 
   TicTacToeController({
     required this.gameMode,
-    required this.humanPlayer,
-    required this.aiPlayer,
-  }) : super(TicTacToeState(
-          players: [humanPlayer, aiPlayer],
-          currentPlayer: humanPlayer,
+    required this.player1,
+    required this.player2,
+    AIDifficulty difficulty = AIDifficulty.hard,
+  })  : _currentDifficulty = difficulty,
+        super(TicTacToeState(
+          players: [player1, player2],
+          currentPlayer: player1,
         )) {
-    _ai = TicTacToeAI(
-      aiPlayer: aiPlayer,
-      aiSymbol: 'O',
-      humanSymbol: 'X',
-      maxDepth: 9,
-      difficulty: 0.9,
-    );
+    if (gameMode == 'vs-ai') {
+      _initializeAI();
+    } else {
+      _ai = null;
+    }
+  }
+
+  // Getters for backward compatibility
+  Player get humanPlayer => player1;
+  Player get aiPlayer => player2;
+
+  AIDifficulty get currentDifficulty => _currentDifficulty;
+
+  void _initializeAI() {
+    if (gameMode == 'vs-ai') {
+      _ai = TicTacToeAI(
+        aiPlayer: player2,
+        aiSymbol: 'O',
+        humanSymbol: 'X',
+        difficultyLevel: _currentDifficulty,
+        maxDepth: 9,
+        difficulty: 0.9,
+      );
+    }
+  }
+
+  void setDifficulty(AIDifficulty difficulty) {
+    if (_currentDifficulty != difficulty) {
+      _currentDifficulty = difficulty;
+      _initializeAI();
+      notifyListeners();
+    }
   }
 
   String getSymbolForPlayer(Player player) {
@@ -67,7 +97,7 @@ class TicTacToeController extends GameController<TicTacToeState> {
     final winner = state.getWinner();
     
     if (winner != null) {
-      final winningPlayer = winner == 'X' ? humanPlayer : aiPlayer;
+      final winningPlayer = winner == 'X' ? player1 : player2;
       final updatedPlayers = state.players.map((player) {
         if (player.id == winningPlayer.id) {
           return player.copyWith(hasWon: true);
@@ -98,10 +128,11 @@ class TicTacToeController extends GameController<TicTacToeState> {
   @override
   void nextTurn() {
     print('DEBUG: nextTurn called - gameMode: $gameMode, currentPlayer: ${state.currentPlayer?.name}');
-    if (gameMode == 'vs-ai' && state.currentPlayer == aiPlayer) {
+    if (gameMode == 'vs-ai' && state.currentPlayer == player2) {
       print('DEBUG: Scheduling AI move');
       _scheduleAIMove();
     }
+    // In multiplayer mode, do nothing - wait for human input
   }
 
   void _scheduleAIMove() {
@@ -113,15 +144,17 @@ class TicTacToeController extends GameController<TicTacToeState> {
 
   void _makeAIMove() {
     print('DEBUG: _makeAIMove called - status: ${state.status}, currentPlayer: ${state.currentPlayer?.name}');
-    if (state.status != GameStatus.playing || state.currentPlayer != aiPlayer) {
+    if (state.status != GameStatus.playing || state.currentPlayer != player2) {
       print('DEBUG: AI move cancelled - invalid state');
       return;
     }
 
-    final bestMove = _ai.getBestMove(state);
-    print('DEBUG: AI best move: $bestMove');
-    if (bestMove != null) {
-      makeMove(bestMove);
+    if (_ai != null) {
+      final bestMove = _ai!.getBestMove(state);
+      print('DEBUG: AI best move: $bestMove');
+      if (bestMove != null) {
+        makeMove(bestMove);
+      }
     }
   }
 
@@ -129,11 +162,22 @@ class TicTacToeController extends GameController<TicTacToeState> {
     _aiMoveTimer?.cancel();
     
     updateState(TicTacToeState(
-      players: [humanPlayer, aiPlayer],
-      currentPlayer: humanPlayer,
+      players: [player1, player2],
+      currentPlayer: player1,
     ));
     
     onGameReset();
+  }
+
+  String getDifficultyDisplayName() {
+    switch (_currentDifficulty) {
+      case AIDifficulty.easy:
+        return 'Easy';
+      case AIDifficulty.hard:
+        return 'Hard';
+      case AIDifficulty.extreme:
+        return 'Extreme';
+    }
   }
 
   @override

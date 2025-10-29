@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:math' as math;
 import 'package:board_game_moongi/src/core/game/player.dart';
 import 'package:board_game_moongi/src/core/game/game_state.dart';
 import 'package:board_game_moongi/src/core/theme/app_theme.dart';
@@ -198,12 +200,6 @@ class _SnakesLaddersScreenState extends State<SnakesLaddersScreen> {
                         ),
                       ),
                     ),
-                    if (isSnakeHead)
-                      const Positioned(
-                        top: 2,
-                        right: 2,
-                        child: Icon(Icons.arrow_downward, size: 12, color: Colors.red),
-                      ),
                     if (isLadderStart)
                       const Positioned(
                         bottom: 2,
@@ -216,11 +212,65 @@ class _SnakesLaddersScreenState extends State<SnakesLaddersScreen> {
             },
           ),
           
+          // Snake SVGs
+          ..._buildSnakes(state),
+          
           // Player tokens
           ..._buildPlayerTokens(state),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildSnakes(SnakesLaddersState state) {
+    final snakes = <Widget>[];
+    
+    for (final snake in state.snakes) {
+      final startIndex = _getCellIndex(snake.start);
+      final endIndex = _getCellIndex(snake.end);
+      
+      final startRow = startIndex ~/ 10;
+      final startCol = startIndex % 10;
+      final endRow = endIndex ~/ 10;
+      final endCol = endIndex % 10;
+      
+      // Calculate snake position and rotation
+      final startX = startCol * 30.0 + 15;
+      final startY = startRow * 30.0 + 15;
+      final endX = endCol * 30.0 + 15;
+      final endY = endRow * 30.0 + 15;
+      
+      final deltaX = endX - startX;
+      final deltaY = endY - startY;
+      final distance = math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      final angle = math.atan2(deltaY, deltaX);
+      
+      snakes.add(
+        Positioned(
+          left: startX - 15,
+          top: startY - 15,
+          child: Transform.rotate(
+            angle: angle,
+            child: SizedBox(
+              width: distance,
+              height: 30,
+              child: SvgPicture.asset(
+                'assets/images/snake.svg',
+                width: distance,
+                height: 30,
+                fit: BoxFit.fill,
+                colorFilter: ColorFilter.mode(
+                  Colors.red.withOpacity(0.8),
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    return snakes;
   }
 
   List<Widget> _buildPlayerTokens(SnakesLaddersState state) {

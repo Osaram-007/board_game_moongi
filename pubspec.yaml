@@ -29,6 +29,7 @@ dependencies:
   # UI Components
   google_fonts: ^6.1.0
   cupertino_icons: ^1.0.6
+  flutter_svg: ^2.0.9
   
   # Utilities
   equatable: ^2.0.5
@@ -49,9 +50,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
-  # assets:
-    # - assets/images/
-    # - assets/animations/
-    # - assets/sounds/
-    # - assets/fonts/
+  assets:
+    - assets/images/
+    - assets/animations/
+    - assets/sounds/
+    - assets/fonts/
   
